@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  TEACHER
+  PARENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+model School {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+
+  users     User[]
+  students  Student[]
+  classes   Class[]
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  schoolId           String
+  username           String   @unique
+  passwordHash       String
+  role               Role
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  school             School   @relation(fields: [schoolId], references: [id])
+  students           Student[]
+}
+
+model Class {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String
+
+  school    School   @relation(fields: [schoolId], references: [id])
+  students  Student[]
+}
+
+model Student {
+  id            String   @id @default(uuid())
+  schoolId      String
+  fullName      String
+  classId       String
+  parentUserId  String
+
+  school        School   @relation(fields: [schoolId], references: [id])
+  class         Class    @relation(fields: [classId], references: [id])
+  parent        User     @relation(fields: [parentUserId], references: [id])
+  attendance    Attendance[]
+  marks         Mark[]
+}
+
+model Attendance {
+  id        String           @id @default(uuid())
+  schoolId  String
+  studentId String
+  date      DateTime
+  status    AttendanceStatus
+
+  student   Student          @relation(fields: [studentId], references: [id])
+}
+
+model Homework {
+  id        String   @id @default(uuid())
+  schoolId  String
+  classId   String
+  subject   String
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model Mark {
+  id        String   @id @default(uuid())
+  schoolId  String
+  studentId String
+  subject   String
+  examName  String
+  score     Int
+
+  student   Student  @relation(fields: [studentId], references: [id])
+}
+

@@ -1,13 +1,13 @@
-console.log("🔥 superAdminRoutes loaded");
 const express = require("express");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
+const prisma = require("../prisma");
+
 const {
   listSchools,
   toggleSchoolStatus,
   listUsersBySchool,
   toggleUserStatus
 } = require("../controllers/superAdminController");
-const prisma = require("../prisma");
 
 const router = express.Router();
 
@@ -17,8 +17,7 @@ const router = express.Router();
 router.use(requireAuth, requireRole("SUPER_ADMIN"));
 
 /**
- * 🩺 Health Check
- * GET /api/super-admin/health
+ * 🩺 Health check
  */
 router.get("/health", (req, res) => {
   res.json({
@@ -29,20 +28,7 @@ router.get("/health", (req, res) => {
 });
 
 /**
- * 🏫 School Management
- */
-router.get("/schools", listSchools);
-router.patch("/schools/:id/status", toggleSchoolStatus);
-
-/**
- * 👥 User Management
- */
-router.get("/schools/:id/users", listUsersBySchool);
-router.patch("/users/:id/status", toggleUserStatus);
-
-/**
  * 📜 Audit Logs
- * GET /api/super-admin/audit-logs
  */
 router.get("/audit-logs", async (req, res, next) => {
   try {
@@ -61,5 +47,17 @@ router.get("/audit-logs", async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * 🏫 School Management
+ */
+router.get("/schools", listSchools);
+router.patch("/schools/:id/status", toggleSchoolStatus);
+
+/**
+ * 👥 User Management
+ */
+router.get("/schools/:id/users", listUsersBySchool);
+router.patch("/users/:id/status", toggleUserStatus);
 
 module.exports = router;

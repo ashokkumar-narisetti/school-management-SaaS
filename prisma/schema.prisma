@@ -113,3 +113,21 @@ model Mark {
 
   student Student @relation(fields: [studentId], references: [id])
 }
+enum AuditAction {
+  SCHOOL_ENABLED
+  SCHOOL_DISABLED
+  USER_ENABLED
+  USER_DISABLED
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  action     AuditAction
+  actorId   String      // super admin user id
+  targetId  String      // school id or user id
+  targetType String     // "SCHOOL" | "USER"
+  meta       Json?
+  createdAt DateTime    @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+}

@@ -14,7 +14,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
 enum Role {
   SUPER_ADMIN
   SCHOOL_ADMIN
@@ -37,7 +36,7 @@ model School {
   id        String       @id @default(uuid())
   name      String
   address   String?
-  isActive  Boolean  @default(true)
+  isActive  Boolean      @default(true)
   status    SchoolStatus @default(ACTIVE)
   createdAt DateTime     @default(now())
 
@@ -47,18 +46,20 @@ model School {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  schoolId     String
-  username     String   @unique
-  passwordHash String
-  role         Role
-  isActive  Boolean  @default(true)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  id       String  @id @default(uuid())
+  username String  @unique
+  password String
+  role     Role
+  active   Boolean @default(true)
 
-  school School @relation(fields: [schoolId], references: [id])
+  schoolId String?
+  school   School? @relation(fields: [schoolId], references: [id])
 
+  // 👇 Parent → Students
   students Student[] @relation("ParentStudents")
+
+  // 👇 Audit logs
+  auditLogs AuditLog[] @relation("UserAuditLogs")
 }
 
 model Class {
@@ -72,15 +73,18 @@ model Class {
 
 model Student {
   id           String @id @default(uuid())
-  schoolId     String
   fullName     String
   classId      String
   parentUserId String
 
-  school     School       @relation(fields: [schoolId], references: [id])
-  class      Class        @relation(fields: [classId], references: [id])
-  parent     User         @relation("ParentStudents", fields: [parentUserId], references: [id])
+  class Class @relation(fields: [classId], references: [id])
+
+  // 👇 Student → Parent
+  parent User @relation("ParentStudents", fields: [parentUserId], references: [id])
+
   attendance Attendance[]
+  school     School?      @relation(fields: [schoolId], references: [id])
+  schoolId   String?
   marks      Mark[]
 }
 
@@ -113,6 +117,7 @@ model Mark {
 
   student Student @relation(fields: [studentId], references: [id])
 }
+
 enum AuditAction {
   SCHOOL_ENABLED
   SCHOOL_DISABLED
@@ -121,13 +126,10 @@ enum AuditAction {
 }
 
 model AuditLog {
-  id         String      @id @default(uuid())
-  action     AuditAction
-  actorId   String      // super admin user id
-  targetId  String      // school id or user id
-  targetType String     // "SCHOOL" | "USER"
-  meta       Json?
-  createdAt DateTime    @default(now())
+  id        String   @id @default(uuid())
+  action    String
+  actorId   String
+  createdAt DateTime @default(now())
 
-  actor User @relation(fields: [actorId], references: [id])
+  actor User @relation("UserAuditLogs", fields: [actorId], references: [id])
 }

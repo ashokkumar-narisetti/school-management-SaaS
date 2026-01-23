@@ -1,4 +1,6 @@
 const prisma = require("../prisma");
+const { logAudit } = require("../utils/auditLogger");
+
 
 // 1️⃣ View all schools
 exports.listSchools = async (req, res) => {
@@ -44,14 +46,34 @@ exports.listUsersBySchool = async (req, res) => {
 };
 
 // 4️⃣ Activate / Deactivate user
-exports.toggleUserStatus = async (req, res) => {
-  const { id } = req.params;
-  const { active } = req.body; // true / false
+exports.toggleUserStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
 
-  const user = await prisma.user.update({
-    where: { id },
-    data: { active }
-  });
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-  res.json({ message: "User status updated", user });
+    const updated = await prisma.user.update({
+      where: { id },
+      data: { isActive: !user.isActive }
+    });
+
+    await logAudit({
+      action: updated.isActive ? "USER_ENABLED" : "USER_DISABLED",
+      actorId: req.user.id,
+      targetId: id,
+      targetType: "USER",
+      meta: { username: user.username, role: user.role }
+    });
+
+    res.json({
+      message: `User ${updated.isActive ? "enabled" : "disabled"}`,
+      user: updated
+    });
+  } catch (err) {
+    next(err);
+  }
 };
+

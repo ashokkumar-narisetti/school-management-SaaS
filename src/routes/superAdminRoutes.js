@@ -1,3 +1,4 @@
+console.log("🔥 superAdminRoutes loaded");
 const express = require("express");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 const {

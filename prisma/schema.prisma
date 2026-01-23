@@ -9,10 +9,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
+
 
 enum Role {
   SUPER_ADMIN
@@ -36,6 +37,7 @@ model School {
   id        String       @id @default(uuid())
   name      String
   address   String?
+  isActive  Boolean  @default(true)
   status    SchoolStatus @default(ACTIVE)
   createdAt DateTime     @default(now())
 
@@ -50,6 +52,7 @@ model User {
   username     String   @unique
   passwordHash String
   role         Role
+  isActive  Boolean  @default(true)
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 

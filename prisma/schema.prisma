@@ -8,10 +8,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -26,51 +26,59 @@ enum AttendanceStatus {
   ABSENT
 }
 
+enum SchoolStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
 model School {
-  id        String   @id @default(uuid())
+  id        String       @id @default(uuid())
   name      String
   address   String?
-  createdAt DateTime @default(now())
+  status    SchoolStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
 
-  users     User[]
-  students  Student[]
-  classes   Class[]
+  users    User[]
+  students Student[]
+  classes  Class[]
 }
 
 model User {
-  id                 String   @id @default(uuid())
-  schoolId           String
-  username           String   @unique
-  passwordHash       String
-  role               Role
-  mustChangePassword Boolean  @default(true)
-  createdAt          DateTime @default(now())
+  id           String   @id @default(uuid())
+  schoolId     String
+  username     String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
 
-  school             School   @relation(fields: [schoolId], references: [id])
-  students           Student[]
+  school School @relation(fields: [schoolId], references: [id])
+
+  students Student[] @relation("ParentStudents")
 }
 
 model Class {
-  id        String   @id @default(uuid())
-  schoolId  String
-  name      String
+  id       String @id @default(uuid())
+  schoolId String
+  name     String
 
-  school    School   @relation(fields: [schoolId], references: [id])
-  students  Student[]
+  school   School    @relation(fields: [schoolId], references: [id])
+  students Student[]
 }
 
 model Student {
-  id            String   @id @default(uuid())
-  schoolId      String
-  fullName      String
-  classId       String
-  parentUserId  String
+  id           String @id @default(uuid())
+  schoolId     String
+  fullName     String
+  classId      String
+  parentUserId String
 
-  school        School   @relation(fields: [schoolId], references: [id])
-  class         Class    @relation(fields: [classId], references: [id])
-  parent        User     @relation(fields: [parentUserId], references: [id])
-  attendance    Attendance[]
-  marks         Mark[]
+  school     School       @relation(fields: [schoolId], references: [id])
+  class      Class        @relation(fields: [classId], references: [id])
+  parent     User         @relation("ParentStudents", fields: [parentUserId], references: [id])
+  attendance Attendance[]
+  marks      Mark[]
 }
 
 model Attendance {
@@ -80,7 +88,7 @@ model Attendance {
   date      DateTime
   status    AttendanceStatus
 
-  student   Student          @relation(fields: [studentId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
 }
 
 model Homework {
@@ -93,13 +101,12 @@ model Homework {
 }
 
 model Mark {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   schoolId  String
   studentId String
   subject   String
   examName  String
   score     Int
 
-  student   Student  @relation(fields: [studentId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
 }
-

@@ -9,8 +9,31 @@ exports.login = async (req, res) => {
   }
 
   const user = await prisma.user.findUnique({
-    where: { username },
+  where: { username },
+  include: { school: true }
+});
+
+if (!user) {
+  return res.status(401).json({ message: "Invalid credentials" });
+}
+
+// BLOCK INACTIVE USER
+if (!user.active) {
+  return res.status(403).json({
+    message: "Your account is deactivated. Contact admin."
   });
+}
+
+// BLOCK INACTIVE SCHOOL (except SUPER_ADMIN)
+if (
+  user.role !== "SUPER_ADMIN" &&
+  user.school?.status !== "ACTIVE"
+) {
+  return res.status(403).json({
+    message: "School is inactive. Access denied."
+  });
+}
+
 
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });

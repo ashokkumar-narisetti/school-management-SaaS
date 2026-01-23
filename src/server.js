@@ -16,6 +16,10 @@ const parentHomeworkRoutes = require("./routes/parentHomeworkRoutes");
 const marksRoutes = require("./routes/marksRoutes");
 const errorHandler = require("./middleware/errorHandler");
 const morgan = require("morgan");
+const superAdminRoutes = require("./routes/superAdminRoutes");
+
+app.use("/api/super-admin", superAdminRoutes);
+
 app.use(morgan("dev"));
 
 app.use(errorHandler);
@@ -55,3 +59,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+console.log("DB URL exists:", !!process.env.DATABASE_URL);
+

@@ -16,14 +16,17 @@ exports.createSchool = async (req, res) => {
   const passwordHash = await bcrypt.hash(adminPassword, 10);
 
   await prisma.user.create({
-    data: {
-      username,
-      passwordHash,
-      role: "SCHOOL_ADMIN",
-      schoolId: school.id,
-      mustChangePassword: true,
-    },
-  });
+  data: {
+    username,
+    passwordHash,
+    role: "SCHOOL_ADMIN",
+    mustChangePassword: true,
+    school: {
+      connect: { id: school.id }
+    }
+  }
+});
+
 
   res.status(201).json({
     message: "School created successfully",

@@ -46,19 +46,20 @@ model School {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  username String  @unique
-  password String
-  role     Role
-  active   Boolean @default(true)
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  schoolId     String?
+  createdAt    DateTime @default(now())
 
-  schoolId String?
-  school   School? @relation(fields: [schoolId], references: [id])
+  school School? @relation(fields: [schoolId], references: [id])
 
-  // 👇 Parent → Students
+  // ✅ Parent → Students (MATCHING NAME)
   students Student[] @relation("ParentStudents")
 
-  // 👇 Audit logs
+  // ✅ Audit logs
   auditLogs AuditLog[] @relation("UserAuditLogs")
 }
 
@@ -79,7 +80,7 @@ model Student {
 
   class Class @relation(fields: [classId], references: [id])
 
-  // 👇 Student → Parent
+  // ✅ Student → Parent (MATCHING NAME)
   parent User @relation("ParentStudents", fields: [parentUserId], references: [id])
 
   attendance Attendance[]

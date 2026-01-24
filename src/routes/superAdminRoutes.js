@@ -1,12 +1,11 @@
 const express = require("express");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
-const prisma = require("../prisma");
-
 const {
   listSchools,
   toggleSchoolStatus,
   listUsersBySchool,
-  toggleUserStatus
+  toggleUserStatus,
+  getAuditLogs
 } = require("../controllers/superAdminController");
 
 const router = express.Router();
@@ -17,7 +16,8 @@ const router = express.Router();
 router.use(requireAuth, requireRole("SUPER_ADMIN"));
 
 /**
- * 🩺 Health check
+ * 🩺 Health Check
+ * GET /api/super-admin/health
  */
 router.get("/health", (req, res) => {
   res.json({
@@ -28,36 +28,20 @@ router.get("/health", (req, res) => {
 });
 
 /**
- * 📜 Audit Logs
- */
-router.get("/audit-logs", async (req, res, next) => {
-  try {
-    const logs = await prisma.auditLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 100,
-      include: {
-        actor: {
-          select: { id: true, username: true }
-        }
-      }
-    });
-
-    res.json(logs);
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
- * 🏫 School Management
+ * 🏫 Schools
  */
 router.get("/schools", listSchools);
 router.patch("/schools/:id/status", toggleSchoolStatus);
 
 /**
- * 👥 User Management
+ * 👥 Users
  */
 router.get("/schools/:id/users", listUsersBySchool);
 router.patch("/users/:id/status", toggleUserStatus);
+
+/**
+ * 🧾 Audit Logs
+ */
+router.get("/audit-logs", getAuditLogs);
 
 module.exports = router;

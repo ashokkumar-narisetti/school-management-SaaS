@@ -1,13 +1,23 @@
 const prisma = require("../prisma");
 
 /**
- * List all schools
+ * List all schools (SUPER ADMIN)
  */
 exports.listSchools = async (req, res, next) => {
   try {
     const schools = await prisma.school.findMany({
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        createdAt: true,
+        _count: {
+          select: { users: true }
+        }
+      },
       orderBy: { createdAt: "desc" }
     });
+
     res.json(schools);
   } catch (err) {
     next(err);

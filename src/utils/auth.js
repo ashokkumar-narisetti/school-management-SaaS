@@ -1,12 +1,12 @@
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const hashPassword = async (password) => {
   return bcrypt.hash(password, 10);
 };
 
-const comparePassword = async (password, hash) => {
-  return bcrypt.compare(password, hash);
+const comparePassword = async (password, passwordHash) => {
+  return bcrypt.compare(password, passwordHash);
 };
 
 const generateToken = (user) => {
@@ -14,10 +14,10 @@ const generateToken = (user) => {
     {
       userId: user.id,
       role: user.role,
-      schoolId: user.schoolId,
+      schoolId: user.schoolId || null,
     },
     process.env.JWT_SECRET,
-    { expiresIn: "1d" }
+    { expiresIn: "7d" }
   );
 };
 

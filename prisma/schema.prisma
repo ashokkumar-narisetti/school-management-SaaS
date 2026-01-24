@@ -51,6 +51,7 @@ model User {
   passwordHash String
   role         Role
   active       Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
   schoolId     String?
   createdAt    DateTime @default(now())
 

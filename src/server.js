@@ -13,6 +13,7 @@ const homeworkRoutes = require("./routes/homeworkRoutes");
 const parentHomeworkRoutes = require("./routes/parentHomeworkRoutes");
 const marksRoutes = require("./routes/marksRoutes");
 const superAdminRoutes = require("./routes/superAdminRoutes");
+const schoolAdminRoutes = require("./routes/schoolAdminRoutes");
 
 const { requireAuth } = require("./middleware/authMiddleware");
 const errorHandler = require("./middleware/errorHandler");
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use(morgan("dev"));
 
 /* ---------- ROUTES ---------- */
+app.use("/api/school-admin", schoolAdminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/schools", schoolRoutes);
 app.use("/api/teachers", teacherRoutes);

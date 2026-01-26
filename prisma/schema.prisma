@@ -14,7 +14,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
 enum Role {
   SUPER_ADMIN
   SCHOOL_ADMIN
@@ -35,7 +34,7 @@ enum SchoolStatus {
 
 model School {
   id        String       @id @default(uuid())
-  name      String
+  name      String       @unique
   address   String?
   isActive  Boolean      @default(true)
   status    SchoolStatus @default(ACTIVE)
@@ -47,14 +46,14 @@ model School {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  passwordHash String
-  role         Role
-  active       Boolean  @default(true)
+  id                 String   @id @default(uuid())
+  username           String   @unique
+  passwordHash       String
+  role               Role
+  active             Boolean  @default(true)
   mustChangePassword Boolean  @default(false)
-  schoolId     String?
-  createdAt    DateTime @default(now())
+  schoolId           String?
+  createdAt          DateTime @default(now())
 
   school School? @relation(fields: [schoolId], references: [id])
 

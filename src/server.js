@@ -60,3 +60,4 @@ app.listen(PORT, () => {
 });
 
 console.log("DB URL exists:", !!process.env.DATABASE_URL);
+// console.log(app._router.stack.map(r => r.route?.path).filter(Boolean));

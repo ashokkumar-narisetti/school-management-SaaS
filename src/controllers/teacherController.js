@@ -35,3 +35,61 @@ exports.createTeacher = async (req, res) => {
     username
   });
 };
+exports.getTeacherClasses = async (req, res, next) => {
+  try {
+    const classes = await prisma.class.findMany({
+      where: {
+        schoolId: req.user.schoolId
+      },
+      select: {
+        id: true,
+        name: true
+      }
+    });
+
+    res.json(classes);
+  } catch (err) {
+    next(err);
+  }
+};
+exports.getStudents = async (req, res, next) => {
+  try {
+    const students = await prisma.student.findMany({
+      where: {
+        schoolId: req.user.schoolId
+      },
+      select: {
+        id: true,
+        fullName: true,
+        classId: true
+      }
+    });
+
+    res.json(students);
+  } catch (err) {
+    next(err);
+  }
+};
+exports.getTeacherStudents = async (req, res, next) => {
+  try {
+    const students = await prisma.student.findMany({
+      where: {
+        schoolId: req.user.schoolId
+      },
+      select: {
+        id: true,
+        fullName: true,
+        class: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    res.json(students);
+  } catch (err) {
+    next(err);
+  }
+};

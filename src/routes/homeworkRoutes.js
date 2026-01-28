@@ -1,10 +1,9 @@
 const express = require("express");
-const { createHomework } = require("../controllers/homeworkController");
-const { requireAuth } = require("../middleware/authMiddleware");
+const { requireAuth, requireRole } = require("../middleware/authMiddleware");
+const { postHomework } = require("../controllers/homeworkController");
 
 const router = express.Router();
 
-router.use(express.json());
-router.post("/", requireAuth, createHomework);
+router.post("/", requireAuth, requireRole("TEACHER"), postHomework);
 
 module.exports = router;

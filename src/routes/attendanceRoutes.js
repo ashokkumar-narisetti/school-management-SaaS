@@ -1,10 +1,14 @@
 const express = require("express");
+const { requireAuth, requireRole } = require("../middleware/authMiddleware");
 const { markAttendance } = require("../controllers/attendanceController");
-const { requireAuth } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.use(express.json());
-router.post("/", requireAuth, markAttendance);
+router.post(
+  "/mark",
+  requireAuth,
+  requireRole("TEACHER"),
+  markAttendance
+);
 
 module.exports = router;

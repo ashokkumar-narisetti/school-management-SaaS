@@ -1,35 +1,27 @@
 const prisma = require("../prisma");
 
-exports.getHomeworkForParent = async (req, res) => {
-  if (req.user.role !== "PARENT") {
-    return res.status(403).json({ message: "Forbidden" });
-  }
+exports.getParentHomework = async (req, res, next) => {
+  try {
+    // find student linked to this parent
+    const student = await prisma.student.findFirst({
+      where: {
+        parentUserId: req.user.userId
+      }
+    });
 
-  // Find the student linked to this parent
-  const student = await prisma.student.findFirst({
-    where: {
-      parentUserId: req.user.userId,
-      schoolId: req.user.schoolId
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
     }
-  });
 
-  if (!student) {
-    return res.status(404).json({ message: "Student not found" });
+    const homework = await prisma.homework.findMany({
+      where: {
+        classId: student.classId
+      },
+      orderBy: { createdAt: "desc" }
+    });
+
+    res.json(homework);
+  } catch (err) {
+    next(err);
   }
-
-  // Fetch homework for student's class
-  const homework = await prisma.homework.findMany({
-    where: {
-      classId: student.classId,
-      schoolId: req.user.schoolId
-    },
-    orderBy: {
-      createdAt: "desc"
-    }
-  });
-
-  res.json({
-    studentName: student.fullName,
-    homework
-  });
 };

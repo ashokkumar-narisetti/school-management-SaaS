@@ -1,9 +1,9 @@
 const express = require("express");
-const { getHomeworkForParent } = require("../controllers/parentHomeworkController");
-const { requireAuth } = require("../middleware/authMiddleware");
+const { requireAuth, requireRole } = require("../middleware/authMiddleware");
+const { getParentHomework } = require("../controllers/parentHomeworkController");
 
 const router = express.Router();
 
-router.get("/", requireAuth, getHomeworkForParent);
+router.get("/", requireAuth, requireRole("PARENT"), getParentHomework);
 
 module.exports = router;

@@ -1,43 +1,39 @@
 const prisma = require("../prisma");
 
-exports.markAttendance = async (req, res) => {
-  if (!req.body) {
-    return res.status(400).json({ message: "Request body missing" });
-  }
+exports.markAttendance = async (req, res, next) => {
+  try {
+    const { classId, date, students } = req.body;
 
-  const { studentId, date, status } = req.body;
-
-  if (!studentId || !date || !status) {
-    return res.status(400).json({ message: "Missing fields" });
-  }
-
-  if (req.user.role !== "TEACHER") {
-    return res.status(403).json({ message: "Forbidden" });
-  }
-
-  // ensure student belongs to same school
-  const student = await prisma.student.findFirst({
-    where: {
-      id: studentId,
-      schoolId: req.user.schoolId
+    if (!classId || !date || !Array.isArray(students)) {
+      return res.status(400).json({ message: "Invalid payload" });
     }
-  });
 
-  if (!student) {
-    return res.status(400).json({ message: "Invalid student" });
-  }
+    // Ensure class belongs to teacher's school
+    const cls = await prisma.class.findFirst({
+      where: {
+        id: classId,
+        schoolId: req.user.schoolId
+      }
+    });
 
-  const attendance = await prisma.attendance.create({
-    data: {
-      studentId,
+    if (!cls) {
+      return res.status(403).json({ message: "Invalid class" });
+    }
+
+    const records = students.map(s => ({
       schoolId: req.user.schoolId,
+      studentId: s.studentId,
       date: new Date(date),
-      status
-    }
-  });
+      status: s.status
+    }));
 
-  res.status(201).json({
-    message: "Attendance marked",
-    attendanceId: attendance.id
-  });
+    await prisma.attendance.createMany({
+      data: records,
+      skipDuplicates: true
+    });
+
+    res.json({ message: "Attendance marked successfully" });
+  } catch (err) {
+    next(err);
+  }
 };

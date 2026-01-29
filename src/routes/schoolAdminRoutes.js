@@ -1,61 +1,37 @@
 const express = require("express");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
-const {
-  getSchoolProfile,
-  listTeachers,
-  createTeacher,
-  toggleTeacherStatus,
-  listClasses,
-  createClass
-} = require("../controllers/schoolAdminController");
+const controller = require("../controllers/schoolAdminController");
 
 const router = express.Router();
 
 /**
- * 🔐 School Admin protection
+ * 🔐 SCHOOL ADMIN PROTECTION
  */
 router.use(requireAuth, requireRole("SCHOOL_ADMIN"));
 
 /**
  * 🏫 School profile
- * GET /api/school-admin/profile
  */
-router.get("/profile", getSchoolProfile);
-
-/**
- * 👥 Users (all users of school)
- * GET /api/school-admin/users
- */
-router.get("/users", async (req, res, next) => {
-  try {
-    const prisma = require("../prisma");
-    const users = await prisma.user.findMany({
-      where: { schoolId: req.user.schoolId },
-      select: {
-        id: true,
-        username: true,
-        role: true,
-        active: true,
-        createdAt: true
-      }
-    });
-    res.json(users);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get("/profile", controller.getSchoolProfile);
 
 /**
  * 👨‍🏫 Teachers
  */
-router.get("/teachers", listTeachers);
-router.post("/teachers", createTeacher);
-router.patch("/teachers/:id/status", toggleTeacherStatus);
+router.get("/teachers", controller.listTeachers);
+router.post("/teachers", controller.createTeacher);
+router.patch("/teachers/:id/status", controller.toggleTeacherStatus);
 
 /**
  * 🏫 Classes
  */
-router.get("/classes", listClasses);
-router.post("/classes", createClass);
+router.get("/classes", controller.listClasses);
+router.post("/classes", controller.createClass);
+
+/**
+ * 👨‍🎓 Students + Parents
+ */
+router.get("/students", controller.listStudents);
+router.post("/students", controller.createStudent);
+router.patch("/students/:id/status", controller.toggleStudentStatus);
 
 module.exports = router;

@@ -1,47 +1,30 @@
 const express = require("express");
 const { requireAuth, requireRole } = require("../middleware/authMiddleware");
-const {
-  listSchools,
-  toggleSchoolStatus,
-  listUsersBySchool,
-  toggleUserStatus,
-  getAuditLogs
-} = require("../controllers/superAdminController");
+const controller = require("../controllers/superAdminController");
 
 const router = express.Router();
 
 /**
- * 🔐 SUPER ADMIN PROTECTION
+ * 🔐 Super Admin protection
  */
 router.use(requireAuth, requireRole("SUPER_ADMIN"));
 
 /**
- * 🩺 Health Check
- * GET /api/super-admin/health
+ * Schools
  */
-router.get("/health", (req, res) => {
-  res.json({
-    ok: true,
-    role: req.user.role,
-    message: "Super Admin API is healthy"
-  });
-});
+router.get("/schools", controller.listSchools);
+router.post("/schools", controller.createSchool);
+router.patch("/schools/:id/status", controller.toggleSchoolStatus);
 
 /**
- * 🏫 Schools
+ * Users
  */
-router.get("/schools", listSchools);
-router.patch("/schools/:id/status", toggleSchoolStatus);
+router.get("/schools/:id/users", controller.listSchoolUsers);
+router.patch("/users/:id/status", controller.toggleUserStatus);
 
 /**
- * 👥 Users
+ * Audit logs
  */
-router.get("/schools/:id/users", listUsersBySchool);
-router.patch("/users/:id/status", toggleUserStatus);
-
-/**
- * 🧾 Audit Logs
- */
-router.get("/audit-logs", getAuditLogs);
+router.get("/audit-logs", controller.getAuditLogs);
 
 module.exports = router;

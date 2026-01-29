@@ -1,23 +1,19 @@
 const prisma = require("../prisma");
+const bcrypt = require("bcryptjs");
 
 /**
- * List all schools (SUPER ADMIN)
+ * 📌 List all schools
  */
 exports.listSchools = async (req, res, next) => {
   try {
     const schools = await prisma.school.findMany({
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        createdAt: true,
+      orderBy: { createdAt: "desc" },
+      include: {
         _count: {
           select: { users: true }
         }
-      },
-      orderBy: { createdAt: "desc" }
+      }
     });
-
     res.json(schools);
   } catch (err) {
     next(err);
@@ -25,16 +21,64 @@ exports.listSchools = async (req, res, next) => {
 };
 
 /**
- * Toggle school active status
+ * 📌 Create school + school admin
+ */
+exports.createSchool = async (req, res, next) => {
+  try {
+    const { name, address, adminPassword } = req.body;
+
+    if (!name || !adminPassword) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const school = await prisma.school.create({
+      data: {
+        name,
+        address,
+        status: "ACTIVE"
+      }
+    });
+
+    const username = `${name.toLowerCase().replace(/\s+/g, "")}@admin`;
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+
+    await prisma.user.create({
+      data: {
+        username,
+        passwordHash,
+        role: "SCHOOL_ADMIN",
+        schoolId: school.id,
+        active: true,
+        mustChangePassword: true
+      }
+    });
+
+    res.status(201).json({
+      message: "School created successfully",
+      schoolId: school.id,
+      adminUsername: username
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * 📌 Activate / Deactivate school
  */
 exports.toggleSchoolStatus = async (req, res, next) => {
   try {
+    const { status } = req.body;
+
+    if (!["ACTIVE", "INACTIVE"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
     const school = await prisma.school.update({
       where: { id: req.params.id },
-      data: {
-        status: req.body.status
-      }
+      data: { status }
     });
+
     res.json(school);
   } catch (err) {
     next(err);
@@ -42,9 +86,9 @@ exports.toggleSchoolStatus = async (req, res, next) => {
 };
 
 /**
- * List users of a school
+ * 📌 List users of a school
  */
-exports.listUsersBySchool = async (req, res, next) => {
+exports.listSchoolUsers = async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
       where: { schoolId: req.params.id },
@@ -52,7 +96,8 @@ exports.listUsersBySchool = async (req, res, next) => {
         id: true,
         username: true,
         role: true,
-        active: true
+        active: true,
+        createdAt: true
       }
     });
     res.json(users);
@@ -62,16 +107,17 @@ exports.listUsersBySchool = async (req, res, next) => {
 };
 
 /**
- * Toggle user active status
+ * 📌 Activate / Deactivate user
  */
 exports.toggleUserStatus = async (req, res, next) => {
   try {
+    const { active } = req.body;
+
     const user = await prisma.user.update({
       where: { id: req.params.id },
-      data: {
-        active: req.body.active
-      }
+      data: { active }
     });
+
     res.json(user);
   } catch (err) {
     next(err);
@@ -79,23 +125,23 @@ exports.toggleUserStatus = async (req, res, next) => {
 };
 
 /**
- * Audit logs
+ * 📌 Audit logs (last 100)
  */
 exports.getAuditLogs = async (req, res, next) => {
   try {
     const logs = await prisma.auditLog.findMany({
-      orderBy: { createdAt: "desc" },
       take: 100,
+      orderBy: { createdAt: "desc" },
       include: {
         actor: {
           select: {
-            id: true,
             username: true,
             role: true
           }
         }
       }
     });
+
     res.json(logs);
   } catch (err) {
     next(err);

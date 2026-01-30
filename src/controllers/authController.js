@@ -58,13 +58,13 @@ const changePassword = async (req, res, next) => {
     const { newPassword } = req.body;
     const userId = req.user.userId;
 
-    if (!newPassword || newPassword.length < 6) {
+    if (!newPassword || newPassword.length < 8) {
       return res.status(400).json({ message: "Password too short" });
     }
 
     const hashed = await hashPassword(newPassword);
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
         passwordHash: hashed,
@@ -72,7 +72,14 @@ const changePassword = async (req, res, next) => {
       },
     });
 
-    res.json({ message: "Password updated successfully" });
+    // ✅ ISSUE NEW TOKEN
+    const newToken = generateToken(updatedUser);
+
+    res.json({
+      message: "Password changed successfully",
+      token: newToken,
+      role: updatedUser.role,
+    });
   } catch (err) {
     next(err);
   }

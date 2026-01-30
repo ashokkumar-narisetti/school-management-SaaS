@@ -1,38 +1,14 @@
 const express = require("express");
-const { requireAuth, requireRole } = require("../middleware/authMiddleware");
-const controller = require("../controllers/teacherController");
+const {
+  createTeacher,
+  getTeachers,
+} = require("../controllers/teacherController");
+const { requireAuth } = require("../middleware/authMiddleware");
+const { requireRole } = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
-/**
- * 🔐 TEACHER PROTECTION
- */
-router.use(requireAuth, requireRole("TEACHER"));
-
-/**
- * 👤 Profile
- */
-router.get("/profile", controller.getProfile);
-
-/**
- * 🏫 Classes & Students
- */
-router.get("/classes", controller.getClasses);
-router.get("/students", controller.getStudents);
-
-/**
- * 🗓️ Attendance
- */
-router.post("/attendance", controller.markAttendance);
-
-/**
- * 📚 Homework
- */
-router.post("/homework", controller.postHomework);
-
-/**
- * 📝 Marks
- */
-router.post("/marks", controller.addMarks);
+router.get("/", requireAuth, requireRole("SCHOOL_ADMIN"), getTeachers);
+router.post("/", requireAuth, requireRole("SCHOOL_ADMIN"), createTeacher);
 
 module.exports = router;

@@ -92,6 +92,21 @@ model Student {
   schoolId   String?
   marks      Mark[]
 }
+model Teacher {
+  id        String   @id @default(uuid())
+  name      String
+  username  String   @unique
+  mobile    String
+  password  String
+  className String?
+  status    TeacherStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+}
+
+enum TeacherStatus {
+  ACTIVE
+  INACTIVE
+}
 
 model Attendance {
   id        String           @id @default(uuid())

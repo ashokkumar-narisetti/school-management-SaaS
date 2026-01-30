@@ -1,36 +1,120 @@
 const prisma = require("../prisma");
-const bcrypt = require("bcrypt");
+const { hashPassword } = require("../utils/auth");
 
-exports.createSchool = async (req, res) => {
-  const { name, address, adminPassword } = req.body;
-
-  if (!name || !adminPassword) {
-    return res.status(400).json({ message: "Missing required fields" });
+/**
+ * GET all schools
+ */
+const getAllSchools = async (req, res, next) => {
+  try {
+    const schools = await prisma.school.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(schools);
+  } catch (err) {
+    next(err);
   }
+};
 
-  const school = await prisma.school.create({
-    data: { name, address },
-  });
+/**
+ * GET users of a school
+ */
+const getSchoolUsers = async (req, res, next) => {
+  try {
+    const { schoolId } = req.params;
 
-  const username = `${name.toLowerCase().replace(/\s+/g, "")}@${school.id}`;
-  const passwordHash = await bcrypt.hash(adminPassword, 10);
+    const users = await prisma.user.findMany({
+      where: { schoolId },
+      orderBy: { role: "asc" },
+    });
 
-  await prisma.user.create({
-  data: {
-    username,
-    passwordHash,
-    role: "SCHOOL_ADMIN",
-    mustChangePassword: true,
-    school: {
-      connect: { id: school.id }
+    res.json(users);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * CREATE school + admin
+ */
+const createSchool = async (req, res, next) => {
+  try {
+    const { name, address, adminPassword } = req.body;
+
+    if (!name || !address || !adminPassword) {
+      return res.status(400).json({
+        message: "Name, address and admin password are required",
+      });
     }
+
+    const school = await prisma.school.create({
+      data: {
+        name,
+        address,
+        status: "ACTIVE", // VALID ENUM
+      },
+    });
+
+    const passwordHash = await hashPassword(adminPassword);
+
+    await prisma.user.create({
+      data: {
+        username: `${name.toLowerCase().replace(/\s+/g, "_")}_admin`,
+        passwordHash,
+        role: "SCHOOL_ADMIN",
+        schoolId: school.id,
+        active: true,
+        mustChangePassword: true,
+      },
+    });
+
+    res.status(201).json(school);
+  } catch (err) {
+    next(err);
   }
-});
+};
 
+/**
+ * TOGGLE school status
+ * ACTIVE <-> SUSPENDED
+ */
+const updateSchoolStatus = async (req, res, next) => {
+  try {
+    const { schoolId } = req.params;
 
-  res.status(201).json({
-    message: "School created successfully",
-    schoolId: school.id,
-    adminUsername: username,
-  });
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+    });
+
+    if (!school) {
+      return res.status(404).json({ message: "School not found" });
+    }
+
+    let newStatus;
+
+    if (school.status === "ACTIVE") {
+      newStatus = "SUSPENDED";
+    } else if (school.status === "SUSPENDED") {
+      newStatus = "ACTIVE";
+    } else {
+      return res.status(400).json({
+        message: "Deleted schools cannot be reactivated",
+      });
+    }
+
+    const updatedSchool = await prisma.school.update({
+      where: { id: schoolId },
+      data: { status: newStatus },
+    });
+
+    res.json(updatedSchool);
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  getAllSchools,
+  getSchoolUsers,
+  createSchool,
+  updateSchoolStatus,
 };

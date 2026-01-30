@@ -16,21 +16,30 @@ const superAdminRoutes = require("./routes/superAdminRoutes");
 const schoolAdminRoutes = require("./routes/schoolAdminRoutes");
 const parentRoutes = require("./routes/parentRoutes");
 
-
 const { requireAuth } = require("./middleware/authMiddleware");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
 /* ---------- GLOBAL MIDDLEWARE ---------- */
-app.use(cors());
+
+// ✅ CORS — MUST BE BEFORE ROUTES
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(morgan("dev"));
 
 /* ---------- ROUTES ---------- */
+app.use("/api/auth", authRoutes);
 app.use("/api/parent", parentRoutes);
 app.use("/api/school-admin", schoolAdminRoutes);
-app.use("/api/auth", authRoutes);
 app.use("/api/schools", schoolRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/classes", classRoutes);
@@ -45,7 +54,7 @@ app.use("/api/super-admin", superAdminRoutes);
 app.get("/api/protected", requireAuth, (req, res) => {
   res.json({
     message: "Access granted",
-    user: req.user
+    user: req.user,
   });
 });
 
@@ -63,4 +72,3 @@ app.listen(PORT, () => {
 });
 
 console.log("DB URL exists:", !!process.env.DATABASE_URL);
-// console.log(app._router.stack.map(r => r.route?.path).filter(Boolean));
